@@ -1,8 +1,7 @@
 import pandas as pd
 import requests
 import os
-from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
-import warnings
+from bs4 import BeautifulSoup
 import re
 
 user_name = os.getenv("SEC_USER_NAME", "Default Name")
