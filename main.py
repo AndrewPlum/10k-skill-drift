@@ -38,46 +38,46 @@ def get_latest_10k_url(cik):
             return f"https://www.sec.gov/Archives/edgar/data/{cik}/{accession_num}/{primary_doc}"
     return None
 
-def extract_item_1(soup):
-    # 1. Find the "Item 1" anchor
-    # We look for a tag that contains 'ITEM 1' specifically 
-    # and isn't just a link in the Table of Contents.
-    start_node = None
-    all_fonts = soup.find_all('font')
-    
-    for font in all_fonts:
-        text = font.get_text(strip=True).upper()
-        # Look for the exact match; usually bold/underlined in filings
-        if text == "ITEM 1." or text == "ITEM 1":
-            # Ensure it's not the Table of Contents (often in an <a> tag)
-            if not font.find_parent('a'):
-                start_node = font
-                break
-                
-    if not start_node:
-        return "Could not find Item 1 start."
+def extract_item1(raw_html):
+    """
+    Extracts the item 1 section from the passed in raw html.
+    """
+    start_pattern = re.compile(r">item(\s|&#160;|&nbsp;)1(\.|\s|&#160;|&nbsp;)<", re.IGNORECASE)
+    end_pattern = re.compile(r">item(\s|&#160;|&nbsp;)2(\.|\s|&#160;|&nbsp;)<", re.IGNORECASE)
 
-    # 2. Traverse siblings to collect content
-    content = []
-    # Move up to a high-level parent (like the <div> or <p> containing the table)
-    current_node = start_node.find_parent('div') 
+    start_matches = list(start_pattern.finditer(raw_html))
+    end_matches = list(end_pattern.finditer(raw_html))
+
+    if not start_matches or not end_matches:
+        return "Could not find Item 1 or Item 2 anchors."
     
-    while current_node:
-        text_content = current_node.get_text(separator=" ", strip=True)
-        
-        # 3. Stop condition: Reaching Item 2
-        # Check if "ITEM 2" appears at the start of a block
-        if "ITEM 2" in text_content.upper()[:20]:
+    """# Uncomment to print matches
+    for start_match in start_matches:
+        print(start_match)
+    for end_match in end_matches:
+        print(end_match)
+    #"""    
+
+    first_item2_match = end_matches[-1]
+    end_index = first_item2_match.start()
+
+    start_index = None
+    for match in start_matches:
+        if match.start() < end_index:
+            start_index = match.start()
+        else:
             break
-            
-        content.append(text_content)
-        current_node = current_node.find_next_sibling()
 
-    return "\n\n".join(content)
+    if start_index is None:
+        return "Logic error: No Item 1 found before Item 2."
+
+    item1_content_raw = raw_html[start_index:end_index]
+    soup = BeautifulSoup(item1_content_raw, 'html.parser')
+
+    return soup.get_text(separator=" ", strip=True)
 
 if __name__ == "__main__":
     ticker = "WMT" 
-    #ticker = "AMZN"
     cik = get_cik_from_ticker(ticker)
 
     if cik:
@@ -86,21 +86,8 @@ if __name__ == "__main__":
         
         response = requests.get(company_10k_url, headers=HEADERS)
         raw_html = response.text
-        
-        """
-        start_index = raw_html.find("Item 1.") 
-        end_index = raw_html.find("Item 2.") 
-        labor_context = raw_html[start_index:end_index]
-        
-        #print(labor_context)
-        filename = "labor_context_preview.html"
 
-        # Save the extracted string as an HTML file
-        with open(filename, "w", encoding="utf-8") as f:
-            f.write(labor_context)
-        """
+        item1_text = extract_item1(raw_html)
 
-        soup = BeautifulSoup(response.content, 'html.parser')
-
-        business_section = extract_item_1(soup)
-        print(business_section[:1000])
+        with open(f"{ticker}10k_item1.txt", "w", encoding="utf-8") as file:
+            file.write(item1_text)
