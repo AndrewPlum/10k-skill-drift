@@ -75,6 +75,41 @@ def extract_item1(raw_html):
 
     return soup.get_text(separator=" ", strip=True)
 
+def extract_human_capital_text(raw_html):
+    start_pattern = re.compile(r">human(\s|&#160;|&nbsp;)capital", re.IGNORECASE)
+    end_pattern = re.compile(r">item(\s|&#160;|&nbsp;)1A(\.|\s|&#160;|&nbsp;)<", re.IGNORECASE)
+
+    start_matches = list(start_pattern.finditer(raw_html))
+    end_matches = list(end_pattern.finditer(raw_html))
+
+    if not start_matches or not end_matches:
+        return "Could not find Item 1 or Item 2 anchors."
+    
+    """# Uncomment to print matches
+    for start_match in start_matches:
+        print(start_match)
+    for end_match in end_matches:
+        print(end_match)
+    #"""    
+
+    first_item2_match = end_matches[-1]
+    end_index = first_item2_match.start()
+
+    start_index = None
+    for match in start_matches:
+        if match.start() < end_index:
+            start_index = match.start()
+        else:
+            break
+
+    if start_index is None:
+        return "Logic error: No Item 1 found before Item 2."
+
+    item1_content_raw = raw_html[start_index:end_index]
+    soup = BeautifulSoup(item1_content_raw, 'html.parser')
+
+    return soup.get_text(separator=" ", strip=True)
+
 if __name__ == "__main__":
     ticker = "WMT" 
     cik = get_cik_from_ticker(ticker)
@@ -90,3 +125,8 @@ if __name__ == "__main__":
 
         with open(f"{ticker}10k_item1.txt", "w", encoding="utf-8") as file:
             file.write(item1_text)
+
+        human_capital_text = extract_human_capital_text(raw_html)
+
+        with open(f"{ticker}_human_capital.txt", "w", encoding="utf-8") as file:
+            file.write(human_capital_text)
