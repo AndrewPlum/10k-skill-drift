@@ -2,12 +2,14 @@ import requests
 from bs4 import BeautifulSoup
 import re
 
+import config
+
 def get_cik_from_ticker(ticker):
     """
     Fetch CIK for a given ticker.
     """
     company_tickers_url = "https://www.sec.gov/files/company_tickers.json"
-    response = requests.get(company_tickers_url, headers=HEADERS)
+    response = requests.get(company_tickers_url, headers=config.HEADERS)
     data = response.json()
     for key, val in data.items():
         if val["ticker"] == ticker.upper():
@@ -19,7 +21,7 @@ def get_latest_10k_url(cik):
     Get the URL for the most recent 10-K filing.
     """
     submissions_url = f"https://data.sec.gov/submissions/CIK{cik}.json"
-    response = requests.get(submissions_url, headers=HEADERS)
+    response = requests.get(submissions_url, headers=config.HEADERS)
     data = response.json()
 
     recent_filings = data["filings"]["recent"]
@@ -29,6 +31,16 @@ def get_latest_10k_url(cik):
             primary_doc = recent_filings["primaryDocument"][i]
             return f"https://www.sec.gov/Archives/edgar/data/{cik}/{accession_num}/{primary_doc}"
     return None
+
+def fetch_10k_content(url):
+    """Dedicated function to handle the download logic."""
+    try:
+        response = requests.get(url, headers=config.HEADERS)
+        response.raise_for_status() # Check for 403 or 404 errors
+        return response.text
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching 10-K: {e}")
+        return None
 
 def extract_item1(raw_html):
     """
