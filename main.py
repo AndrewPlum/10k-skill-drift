@@ -25,3 +25,5 @@ if __name__ == "__main__":
         # CSV downloaded from the O*net database - could connect to the API later for live data but that was demonstrated previously
         # and this serves our purposes fine
         hot_tech_skills_df = pd.read_csv("Hot_Technologies.csv")
+        hot_tech_skills_list = hot_tech_skills_df["Hot Technology"].tolist()
+        print(hot_tech_skills_list)
