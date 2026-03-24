@@ -1,6 +1,8 @@
 import pandas as pd
+import re
 
 import extractor
+import analyzer
 
 if __name__ == "__main__":
     ticker = "WMT" 
@@ -25,5 +27,18 @@ if __name__ == "__main__":
         # CSV downloaded from the O*net database - could connect to the API later for live data but that was demonstrated previously
         # and this serves our purposes fine
         hot_tech_skills_df = pd.read_csv("Hot_Technologies.csv")
-        hot_tech_skills_list = hot_tech_skills_df["Hot Technology"].tolist()
-        print(hot_tech_skills_list)
+        tech_skills_set = set(hot_tech_skills_df["Hot Technology"].tolist())
+
+        match = re.search(rf"{re.escape(ticker)}-(\d{{4}})(\d{{2}})(\d{{2}})", company_10k_url, re.IGNORECASE) # assumes the year is 4 digits and format of url does not change
+        if match:
+            year = match.group(1)
+            """# Uncomment if you use the other dates
+            month = match.group(2)
+            day = match.group(3)
+            date_str = f"{year}-{month}-{day}"
+            #"""
+        else:
+            print("Date not found in URL.")
+
+        llm_skill_response_json = analyzer.analyze_labor_drift(human_capital_text, ticker, year)
+        print(llm_skill_response_json)

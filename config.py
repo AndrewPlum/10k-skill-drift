@@ -9,3 +9,4 @@ HEADERS = {"User-Agent": f"{user_name} ({user_email})"}
 # OpenRouter configuration
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+OPENROUTER_MODEL_NAME = "openrouter/free" 
