@@ -1,3 +1,5 @@
+import pandas as pd
+
 import extractor
 
 if __name__ == "__main__":
@@ -19,3 +21,7 @@ if __name__ == "__main__":
 
         with open(f"{ticker}_human_capital.txt", "w", encoding="utf-8") as file:
             file.write(human_capital_text)
+
+        # CSV downloaded from the O*net database - could connect to the API later for live data but that was demonstrated previously
+        # and this serves our purposes fine
+        hot_tech_skills_df = pd.read_csv("Hot_Technologies.csv")
