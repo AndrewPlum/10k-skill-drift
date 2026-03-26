@@ -41,4 +41,3 @@ if __name__ == "__main__":
             print("Date not found in URL.")
 
         llm_skill_response_json = analyzer.analyze_labor_drift(human_capital_text, ticker, year)
-        print(llm_skill_response_json)
