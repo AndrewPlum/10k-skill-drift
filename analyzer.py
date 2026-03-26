@@ -57,8 +57,22 @@ def analyze_labor_drift(extracted_text, ticker, year):
     
     try:
         result = response.json()
-        content = result['choices'][0]['message']['content']
-        return json.loads(content)
-    except (KeyError, json.JSONDecodeError) as e:
+
+        if not isinstance(result, dict):
+            raise ValueError("Result is not a dictionary")
+
+        choices = result.get('choices')
+        if not choices:
+            print(f"Full response: {result}") 
+            raise KeyError("The 'choices' key is missing from the response")
+
+        content = choices[0]['message']['content']
+
+        clean_content = content.strip().replace('```json', '').replace('```', '')
+        
+        return json.loads(clean_content)
+
+    except (KeyError, json.JSONDecodeError, IndexError, ValueError) as e:
         print(f"Error parsing LLM response for {ticker} {year}: {e}")
+
         return None
